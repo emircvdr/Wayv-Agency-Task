@@ -159,6 +159,17 @@ export default function DashboardPage() {
         }
     };
 
+    const getDuration = (campaign: any) => {
+        if (!campaign.start_date || !campaign.end_date) return "Set dates to see duration";
+
+        const start = new Date(campaign.start_date);
+        const end = new Date(campaign.end_date);
+        const diffTime = Math.abs(end.getTime() - start.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        return `${diffDays} days`;
+    };
+
     return (
         <div className="w-full h-full space-y-6">
             <div className="bg-white  border rounded-xl shadow-sm p-4">
@@ -381,6 +392,9 @@ export default function DashboardPage() {
                                         Active
                                     </Badge>
                                 </div>
+                                <div className="flex justify-between items-center mt-1">
+                                    <span className="text-sm">{campaign.campaign_description}</span>
+                                </div>
 
                                 <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
                                     <div className="flex justify-between items-center">
@@ -388,13 +402,20 @@ export default function DashboardPage() {
                                         <span className="text-sm font-medium">{campaign.budget}</span>
                                     </div>
                                     <div className="flex justify-between items-center mt-1">
-                                        <span className="text-sm text-gray-500">Dates:</span>
-                                        <span className="text-sm">{campaign.start_date} - {campaign.end_date}</span>
+                                        <span className="text-sm text-gray-500">Start Date:</span>
+                                        <span className="text-sm">{campaign.start_date}</span>
                                     </div>
                                     <div className="flex justify-between items-center mt-1">
-                                        <span className="text-sm text-gray-500">Campaign Description:</span>
-                                        <span className="text-sm">{campaign.campaign_description}</span>
+                                        <span className="text-sm text-gray-500">End Date:</span>
+                                        <span className="text-sm">{campaign.end_date}</span>
                                     </div>
+                                    <div className="flex justify-between items-center mt-1">
+                                        <span className="text-sm text-gray-500">Duration:</span>
+                                        <span className="text-sm">{
+                                            getDuration(campaign)
+                                        }</span>
+                                    </div>
+
                                 </div>
                             </div>
                         </div>

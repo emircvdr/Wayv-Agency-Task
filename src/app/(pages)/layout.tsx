@@ -6,6 +6,8 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { createClient } from "@/lib/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
+import { redirect } from "next/navigation";
+import { useEffect } from "react";
 
 interface MainLayoutProps {
     children: React.ReactNode;
@@ -24,6 +26,12 @@ const MainLayout = ({ children }: MainLayoutProps) => {
             return data;
         }
     });
+
+    useEffect(() => {
+        if (error) {
+            redirect("/login");
+        }
+    }, [error]);
 
     if (isLoading) {
         return (

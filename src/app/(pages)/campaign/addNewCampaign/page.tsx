@@ -71,8 +71,8 @@ export default function NewCampaignPage() {
                 brand_name: campaign.brand_name,
                 budget: Number(campaign.budget),
                 campaign_description: campaign.campaign_description,
-                start_date: campaign.start_date?.toISOString() || "",
-                end_date: campaign.end_date?.toISOString() || "",
+                start_date: campaign.start_date ? new Date(campaign.start_date.setHours(12, 0, 0, 0)).toISOString() : "",
+                end_date: campaign.end_date ? new Date(campaign.end_date.setHours(12, 0, 0, 0)).toISOString() : "",
                 image_id: imageId,
             });
             router.push('/campaign');

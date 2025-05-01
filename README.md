@@ -38,7 +38,6 @@ You can check out the live application here:
 
 - **Dashboard**:
   - Overview of all music campaigns
-  - Filter ------
 - **Campaign Management**:
   - Create new campaigns with campaign title, brand, start date,end date, budget, image, and campaign description
   - View campaign details with the card preview

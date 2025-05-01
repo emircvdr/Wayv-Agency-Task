@@ -67,7 +67,7 @@ export function AppSidebar({ userData }: { userData: any }) {
                     <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-[#034752] to-[#e2bfdf] flex items-center justify-center">
                         <span className="text-white font-bold text-lg">W</span>
                     </div>
-                    <h1 className="text-xl font-bold bg-gradient-to-r from-[#034752] to-[#e2bfdf] bg-clip-text text-transparent">Wayv</h1>
+                    <h1 className="text-xl font-bold bg-gradient-to-r from-[#034752] to-[#e2bfdf] bg-clip-text text-transparent">Wayv Agency</h1>
                 </div>
             </SidebarHeader>
 
@@ -106,7 +106,7 @@ export function AppSidebar({ userData }: { userData: any }) {
                                 <SidebarMenuButton className="rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors py-2 px-3">
                                     <Avatar className="h-7 w-7">
                                         <AvatarImage src={userData?.user.user_metadata.avatar_url} />
-                                        <AvatarFallback className="bg-gradient-to-br from-[#034752] to-[#e2bfdf] text-white">
+                                        <AvatarFallback className="bg-[#034752] text-[#faf2fa] ">
                                             {getInitials()}
                                         </AvatarFallback>
                                     </Avatar>
@@ -129,7 +129,7 @@ export function AppSidebar({ userData }: { userData: any }) {
                                 <div className="flex flex-row items-center justify-start gap-3 p-3 mb-1 bg-gray-50 dark:bg-gray-900 rounded-md">
                                     <Avatar className="h-10 w-10 border-2 border-white shadow-sm">
                                         <AvatarImage src={userData?.user.user_metadata.avatar_url} />
-                                        <AvatarFallback className="bg-gradient-to-br from-[#034752] to-[#e2bfdf] text-white">
+                                        <AvatarFallback className="bg-[#034752] text-[#faf2fa]">
                                             {getInitials()}
                                         </AvatarFallback>
                                     </Avatar>

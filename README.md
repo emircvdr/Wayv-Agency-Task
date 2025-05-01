@@ -83,12 +83,12 @@ DATABASE_URL=postgresql://postgres:your-password@your-project-ref.supabase.co:54
   1. Go to your Supabse Project 🔗 [https://app.supabase.com](https://app.supabase.com)
   2. Select Your Project
   3. Navigate to Settings -> API
-     3.1. Copy `Project URL` -> use it as `NEXT_PUBLIC_SUPABASE_URL`
-     3.2. Copy `anon public` key -> use it as `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+    - Copy `Project URL` -> use it as `NEXT_PUBLIC_SUPABASE_URL`
+    - Copy `anon public` key -> use it as `NEXT_PUBLIC_SUPABASE_ANON_KEY`
   4. Click the `Connect` button top of the screen
-     4.1. Click the ORMs
-     4.2. Select the Drizzle
-     4.3 Copy and paste the `DATABASE_URL`
+    - Click the ORMs
+    - Select the Drizzle
+    - Copy and paste the `DATABASE_URL`
 
 2. Run database migrations:
 

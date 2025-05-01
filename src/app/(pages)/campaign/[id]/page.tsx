@@ -44,6 +44,8 @@ export default function EditCampaignPage() {
         start_date: undefined as Date | undefined,
         end_date: undefined as Date | undefined,
         image: null as string | null,
+        imageFile: null as File | null,
+        image_id: null as string | null,
     });
 
     const supabase = createClient();
@@ -70,6 +72,8 @@ export default function EditCampaignPage() {
                 start_date: campaignData.start_date ? new Date(campaignData.start_date) : undefined,
                 end_date: campaignData.end_date ? new Date(campaignData.end_date) : undefined,
                 image: null,
+                imageFile: null,
+                image_id: campaignData.image_id,
             };
 
             setCampaign(newCampaign);
@@ -91,8 +95,33 @@ export default function EditCampaignPage() {
     const handleUpdateCampaign = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         console.log("Form submitted with data:", campaign);
+        setIsLoading(true);
 
         try {
+            let image_id = campaign.image_id;
+
+            if (campaign.imageFile) {
+                const userId = "4ea27eae-961f-42a1-b799-3f269cb4f102"; // This will be changed to actual user id
+                const fileName = `${Date.now()}-${campaign.imageFile.name}`;
+
+                const { data: uploadData, error: uploadError } = await supabase.storage
+                    .from("campaign-images")
+                    .upload(`${userId}/${fileName}`, campaign.imageFile);
+
+                if (uploadError) {
+                    throw new Error(`Image upload failed: ${uploadError.message}`);
+                }
+
+                const { data: fileData } = await supabase.storage
+                    .from("campaign-images")
+                    .list(userId);
+
+                const newImage = fileData?.find(file => file.name === fileName);
+                if (newImage) {
+                    image_id = newImage.id;
+                }
+            }
+
             await updateCampaign.mutateAsync({
                 id: campaignId,
                 data: {
@@ -102,12 +131,14 @@ export default function EditCampaignPage() {
                     campaign_description: campaign.campaign_description,
                     start_date: campaign.start_date?.toISOString() || "",
                     end_date: campaign.end_date?.toISOString() || "",
+                    image_id: image_id,
                 }
             });
             router.push('/campaign');
         } catch (error) {
             setError("Failed to update campaign. Please try again.");
             console.error("Error updating campaign:", error);
+            setIsLoading(false);
         }
     };
 
@@ -120,16 +151,19 @@ export default function EditCampaignPage() {
 
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
             const reader = new FileReader();
+
             reader.onload = (e) => {
                 if (e.target?.result) {
                     setCampaign({
                         ...campaign,
-                        image: e.target.result as string,
+                        image: URL.createObjectURL(file),
+                        imageFile: file,
                     });
                 }
             };
-            reader.readAsDataURL(e.target.files[0]);
+            reader.readAsDataURL(file);
         }
     };
 
@@ -186,7 +220,9 @@ export default function EditCampaignPage() {
                                             {campaign.image ? (
                                                 <div className="relative w-full h-full overflow-hidden rounded-lg">
                                                     <Image
-                                                        src={`https://hpyytbglpqsaxlnxgijh.supabase.co/storage/v1/object/public/campaign-images/4ea27eae-961f-42a1-b799-3f269cb4f102/${campaign.image}`}
+                                                        src={campaign.imageFile
+                                                            ? campaign.image
+                                                            : `https://hpyytbglpqsaxlnxgijh.supabase.co/storage/v1/object/public/campaign-images/4ea27eae-961f-42a1-b799-3f269cb4f102/${campaign.image}`}
                                                         alt="Campaign preview"
                                                         style={{ objectFit: 'cover' }}
                                                         className="transition-opacity"
@@ -350,7 +386,9 @@ export default function EditCampaignPage() {
                                 <div className="relative w-full h-48 bg-gray-200 dark:bg-gray-700">
                                     {campaign.image ? (
                                         <Image
-                                            src={`https://hpyytbglpqsaxlnxgijh.supabase.co/storage/v1/object/public/campaign-images/4ea27eae-961f-42a1-b799-3f269cb4f102/${campaign.image}`}
+                                            src={campaign.imageFile
+                                                ? campaign.image
+                                                : `https://hpyytbglpqsaxlnxgijh.supabase.co/storage/v1/object/public/campaign-images/4ea27eae-961f-42a1-b799-3f269cb4f102/${campaign.image}`}
                                             alt="Campaign"
                                             style={{ objectFit: 'cover' }}
                                             fill

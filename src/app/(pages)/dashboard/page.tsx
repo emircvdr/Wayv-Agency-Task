@@ -5,12 +5,6 @@ import { Search, Filter, Calendar, DollarSign, SlidersHorizontal, X } from "luci
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
     Popover,
     PopoverContent,
     PopoverTrigger,
@@ -40,7 +34,7 @@ export default function DashboardPage() {
 
     return (
         <div className="w-full h-full space-y-6">
-            <div className="bg-white dark:bg-gray-950 border rounded-xl shadow-sm p-4">
+            <div className="bg-white  border rounded-xl shadow-sm p-4">
                 <div className="flex flex-col gap-4">
                     <div className="flex items-center gap-3 flex-wrap">
                         <div className="relative flex-1 min-w-[240px]">
@@ -52,7 +46,6 @@ export default function DashboardPage() {
                             <PopoverTrigger asChild>
                                 <Button variant="outline" className="flex items-center gap-2">
                                     <Filter className="h-4 w-4" />
-                                    <span>Filters</span>
                                 </Button>
                             </PopoverTrigger>
                             <PopoverContent className="w-80 p-4" align="end">
@@ -105,7 +98,13 @@ export default function DashboardPage() {
                                                         to: dateRange.to,
                                                     }}
                                                     onSelect={(range) => {
-                                                        setDateRange(range || { from: undefined, to: undefined });
+                                                        setDateRange(range ? {
+                                                            from: range.from,
+                                                            to: range.to || undefined
+                                                        } : {
+                                                            from: undefined,
+                                                            to: undefined
+                                                        });
                                                         if (range?.from && range?.to) {
                                                             const fromDate = range.from.toLocaleDateString();
                                                             const toDate = range.to.toLocaleDateString();
@@ -119,33 +118,7 @@ export default function DashboardPage() {
                                         </Popover>
                                     </div>
 
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium">Status</label>
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="outline" className="w-full justify-between">
-                                                    <span>Select status</span>
-                                                    <SlidersHorizontal className="h-4 w-4" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
-                                                <DropdownMenuItem onClick={() => addFilter("Active")}>
-                                                    Active
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => addFilter("Paused")}>
-                                                    Paused
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => addFilter("Completed")}>
-                                                    Completed
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => addFilter("Draft")}>
-                                                    Draft
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    </div>
-
-                                    <div className="pt-4 flex justify-between">
+                                    <div className="pt-1 flex justify-between">
                                         <Button
                                             variant="outline"
                                             onClick={() => {
@@ -155,39 +128,9 @@ export default function DashboardPage() {
                                         >
                                             Reset
                                         </Button>
-                                        <Button>Apply Filters</Button>
+                                        <Button>Apply   </Button>
                                     </div>
                                 </div>
-                            </PopoverContent>
-                        </Popover>
-
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <Button variant="outline" className="flex items-center gap-2">
-                                    <Calendar className="h-4 w-4" />
-                                    <span>Date: Last 7 days</span>
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0">
-                                <CalendarComponent
-                                    mode="range"
-                                    selected={{
-                                        from: dateRange.from,
-                                        to: dateRange.to,
-                                    }}
-                                    onSelect={(range) => {
-                                        setDateRange(range || { from: undefined, to: undefined });
-                                        if (range?.from && range?.to) {
-                                            const fromDate = range.from.toLocaleDateString();
-                                            const toDate = range.to.toLocaleDateString();
-                                            // Replace any existing date filter
-                                            const filteredFilters = activeFilters.filter(f => !f.includes(' - '));
-                                            setActiveFilters([...filteredFilters, `${fromDate} - ${toDate}`]);
-                                        }
-                                    }}
-                                    numberOfMonths={2}
-                                    initialFocus
-                                />
                             </PopoverContent>
                         </Popover>
                     </div>

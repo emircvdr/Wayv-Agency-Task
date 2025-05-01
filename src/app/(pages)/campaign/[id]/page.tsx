@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Calendar as CalendarIcon, DollarSign, Upload, ArrowLeft } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -17,13 +17,23 @@ import {
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
 
-export default function NewCampaignPage() {
+export default function EditCampaignPage() {
     const router = useRouter();
+    const params = useParams();
+    const campaignId = params.id as string;
+
     const [error, setError] = useState<string | null>(null);
-    const createCampaign = trpc.campaigns.create.useMutation();
+    const [isLoading, setIsLoading] = useState(true);
+
+    const { data: campaignData, isLoading: isFetching } = trpc.campaigns.getById.useQuery(
+        { id: campaignId },
+        { enabled: !!campaignId }
+    );
+
+    const updateCampaign = trpc.campaigns.update.useMutation();
 
     const [campaign, setCampaign] = useState({
         campaign_title: "",
@@ -34,23 +44,43 @@ export default function NewCampaignPage() {
         end_date: undefined as Date | undefined,
         image: null as string | null,
     });
-    const handleCreateCampaign = async (e: React.FormEvent<HTMLFormElement>) => {
+
+    // Load campaign data when it's fetched
+    useEffect(() => {
+        if (campaignData && !isFetching) {
+            setCampaign({
+                campaign_title: campaignData.campaign_title,
+                brand_name: campaignData.brand_name,
+                budget: campaignData.budget?.toString().replace(/^\$/, '') || "", // Remove $ if present
+                campaign_description: campaignData.campaign_description || "",
+                start_date: campaignData.start_date ? new Date(campaignData.start_date) : undefined,
+                end_date: campaignData.end_date ? new Date(campaignData.end_date) : undefined,
+                image: null, // We would need to handle image retrieval separately
+            });
+            setIsLoading(false);
+        }
+    }, [campaignData, isFetching]);
+
+    const handleUpdateCampaign = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         console.log("Form submitted with data:", campaign);
 
         try {
-            await createCampaign.mutateAsync({
-                campaign_title: campaign.campaign_title,
-                brand_name: campaign.brand_name,
-                budget: Number(campaign.budget),
-                campaign_description: campaign.campaign_description,
-                start_date: campaign.start_date?.toISOString() || "",
-                end_date: campaign.end_date?.toISOString() || "",
+            await updateCampaign.mutateAsync({
+                id: campaignId,
+                data: {
+                    campaign_title: campaign.campaign_title,
+                    brand_name: campaign.brand_name,
+                    budget: Number(campaign.budget),
+                    campaign_description: campaign.campaign_description,
+                    start_date: campaign.start_date?.toISOString() || "",
+                    end_date: campaign.end_date?.toISOString() || "",
+                }
             });
             router.push('/campaign');
         } catch (error) {
-            setError("Failed to create campaign. Please try again.");
-            console.error("Error creating campaign:", error);
+            setError("Failed to update campaign. Please try again.");
+            console.error("Error updating campaign:", error);
         }
     };
 
@@ -87,6 +117,17 @@ export default function NewCampaignPage() {
         return `${diffDays} days`;
     };
 
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center h-screen">
+                <div className="text-center">
+                    <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
+                    <p className="mt-2">Loading campaign data...</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="max-w-7xl mx-auto pb-10">
             <div className="flex items-center mb-6">
@@ -101,17 +142,16 @@ export default function NewCampaignPage() {
                 </Button>
             </div>
 
-
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2">
                     <Card className="shadow-sm">
                         <CardHeader>
-                            <CardTitle>Campaign Details</CardTitle>
-                            <CardDescription>Fill in the information below to create your campaign</CardDescription>
+                            <CardTitle>Edit Campaign</CardTitle>
+                            <CardDescription>Update your campaign information</CardDescription>
                         </CardHeader>
                         <Separator />
                         <CardContent className="pt-6">
-                            <form className="space-y-4" onSubmit={handleCreateCampaign}>
+                            <form className="space-y-4" onSubmit={handleUpdateCampaign}>
                                 <div className="space-y-2">
                                     <Label htmlFor="image">Campaign Image</Label>
                                     <div className="flex items-center justify-center w-full">
@@ -252,12 +292,18 @@ export default function NewCampaignPage() {
                                     </div>
                                 </div>
 
+                                {error && (
+                                    <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm">
+                                        {error}
+                                    </div>
+                                )}
+
                                 <div className="flex justify-end pt-4">
                                     <Button
                                         type="submit"
                                         className="bg-[#034752] hover:bg-[#034752]/90 text-[#f9eef8] px-6"
                                     >
-                                        Create Campaign
+                                        Update Campaign
                                     </Button>
                                 </div>
                             </form>
@@ -299,8 +345,8 @@ export default function NewCampaignPage() {
                                                 {campaign.brand_name || "Brand Name"}
                                             </p>
                                         </div>
-                                        <Badge variant="outline" className="bg-green-100 text-green-700 border-0">
-                                            Draft
+                                        <Badge variant="outline" className="bg-yellow-100 text-yellow-700 border-0">
+                                            Editing
                                         </Badge>
                                     </div>
 
@@ -340,7 +386,6 @@ export default function NewCampaignPage() {
                             </div>
                         </CardContent>
                     </Card>
-                    {error && <p className="text-red-500">{error}</p>}
                 </div>
             </div>
         </div>

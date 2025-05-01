@@ -1,13 +1,11 @@
+import { campaignRouter } from "./routers/campaigns";
 import { router } from "./server";
-
-// Import all sub-routers
-// import { campaignRouter } from "./routers/campaign";
 // import { storageRouter } from "./routers/storage";
 
 // Create the app router with all sub-routers
 export const appRouter = router({
   // Add routers here
-  //   campaign: campaignRouter,
+  campaigns: campaignRouter,
   //   storage: storageRouter,
 });
 

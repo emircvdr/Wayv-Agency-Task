@@ -9,50 +9,51 @@ import {
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-
-const campaignData = [
-    {
-        id: "1",
-        campaign_title: "Summer Promotion 2025",
-        budget: "$2,500",
-        start_date: "May 15, 2025",
-        end_date: "Jun 30, 2025",
-    },
-    {
-        id: "2",
-        campaign_title: "Product Launch - Mobile App",
-        budget: "$5,000",
-        start_date: "Jun 1, 2025",
-        end_date: "Jul 15, 2025",
-    },
-    {
-        id: "3",
-        campaign_title: "Holiday Season Special",
-        budget: "$3,200",
-        start_date: "-",
-        end_date: "-",
-    },
-    {
-        id: "4",
-        campaign_title: "Black Friday Sales",
-        budget: "$1,800",
-        start_date: "Apr 1, 2025",
-        end_date: "Apr 30, 2025",
-    },
-];
-
-
+import { trpc } from "@/lib/trpc/client";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 
 export default function CampaignPage() {
     const router = useRouter();
     const [searchValue, setSearchValue] = useState("");
     const [activeTab, setActiveTab] = useState("all");
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [campaignToDelete, setCampaignToDelete] = useState<string | null>(null);
 
-    // Filter data based on search and tab
-    const filteredData = campaignData.filter(campaign => {
+    const campaignsQuery = trpc.campaigns.getAll.useQuery();
+    const deleteCampaign = trpc.campaigns.delete.useMutation({
+        onSuccess: () => {
+            campaignsQuery.refetch();
+            setDeleteDialogOpen(false);
+        }
+    });
+
+    const campaigns = campaignsQuery.data;
+
+    const filteredData = campaigns?.filter(campaign => {
         const matchesSearch = campaign.campaign_title.toLowerCase().includes(searchValue.toLowerCase());
         return matchesSearch
     });
+
+    const handleEditCampaign = (id: string) => {
+        router.push(`/campaign/${id}`);
+    };
+
+    const handleDeleteCampaign = async () => {
+        if (campaignToDelete) {
+            try {
+                await deleteCampaign.mutateAsync({ id: campaignToDelete });
+            } catch (error) {
+                console.error("Error deleting campaign:", error);
+            }
+        }
+    };
 
     const columns = [
         {
@@ -77,6 +78,7 @@ export default function CampaignPage() {
             header: "",
             id: "actions",
             cell: ({ row }: { row: any }) => {
+                const campaign = row.original;
                 return (
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -86,12 +88,21 @@ export default function CampaignPage() {
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="start" className="w-[180px]">
-                            <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
+                            <DropdownMenuItem
+                                className="flex items-center gap-2 cursor-pointer"
+                                onClick={() => handleEditCampaign(campaign.id)}
+                            >
                                 <Pencil className="h-4 w-4" />
                                 <span>Edit</span>
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem className="flex items-center gap-2 cursor-pointer text-red-500 focus:text-red-500">
+                            <DropdownMenuItem
+                                className="flex items-center gap-2 cursor-pointer text-red-500 focus:text-red-500"
+                                onClick={() => {
+                                    setCampaignToDelete(campaign.id);
+                                    setDeleteDialogOpen(true);
+                                }}
+                            >
                                 <Trash className="h-4 w-4" />
                                 <span>Delete</span>
                             </DropdownMenuItem>
@@ -125,10 +136,35 @@ export default function CampaignPage() {
                     </div>
                 </div>
 
-                <DataTable columns={columns} data={filteredData} searchValue={searchValue} />
-
-
+                <DataTable columns={columns} data={filteredData || []} searchValue={searchValue} />
             </div>
+
+            {/* Delete Confirmation Dialog */}
+            <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Delete Campaign</DialogTitle>
+                        <DialogDescription>
+                            Are you sure you want to delete this campaign? This action cannot be undone.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button
+                            variant="outline"
+                            onClick={() => setDeleteDialogOpen(false)}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            onClick={handleDeleteCampaign}
+                            disabled={deleteCampaign.isPending}
+                        >
+                            {deleteCampaign.isPending ? "Deleting..." : "Delete"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

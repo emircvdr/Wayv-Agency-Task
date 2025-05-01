@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { useRouter, useParams } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
+import { createClient } from "@/lib/supabase/client";
 
 export default function EditCampaignPage() {
     const router = useRouter();
@@ -45,21 +46,47 @@ export default function EditCampaignPage() {
         image: null as string | null,
     });
 
-    // Load campaign data when it's fetched
+    const supabase = createClient();
+    async function getImage() {
+        const { data, error } = await supabase.storage.from("campaign-images").list(
+            "4ea27eae-961f-42a1-b799-3f269cb4f102" //userId test (it going to be changed to the user id)
+            +
+            "/"
+
+        );
+        if (error) {
+            throw new Error(`Download failed: ${error.message}`);
+        }
+        return data;
+    }
+
     useEffect(() => {
         if (campaignData && !isFetching) {
-            setCampaign({
+            const newCampaign = {
                 campaign_title: campaignData.campaign_title,
                 brand_name: campaignData.brand_name,
-                budget: campaignData.budget?.toString().replace(/^\$/, '') || "", // Remove $ if present
+                budget: campaignData.budget?.toString().replace(/^\$/, '') || "",
                 campaign_description: campaignData.campaign_description || "",
                 start_date: campaignData.start_date ? new Date(campaignData.start_date) : undefined,
                 end_date: campaignData.end_date ? new Date(campaignData.end_date) : undefined,
-                image: null, // We would need to handle image retrieval separately
-            });
+                image: null,
+            };
+
+            setCampaign(newCampaign);
             setIsLoading(false);
+
+            getImage().then((images) => {
+                const matched = images.find((img) => img.id === campaignData.image_id);
+                if (matched) {
+                    setCampaign((prev) => ({
+                        ...prev,
+                        image: matched.name,
+                    }));
+                }
+            });
         }
     }, [campaignData, isFetching]);
+
 
     const handleUpdateCampaign = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -159,11 +186,11 @@ export default function EditCampaignPage() {
                                             {campaign.image ? (
                                                 <div className="relative w-full h-full overflow-hidden rounded-lg">
                                                     <Image
-                                                        src={campaign.image}
+                                                        src={`https://hpyytbglpqsaxlnxgijh.supabase.co/storage/v1/object/public/campaign-images/4ea27eae-961f-42a1-b799-3f269cb4f102/${campaign.image}`}
                                                         alt="Campaign preview"
-                                                        fill
                                                         style={{ objectFit: 'cover' }}
                                                         className="transition-opacity"
+                                                        fill
                                                     />
                                                     <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 hover:opacity-100 transition-opacity">
                                                         <p className="text-white font-medium">Change Image</p>
@@ -323,10 +350,10 @@ export default function EditCampaignPage() {
                                 <div className="relative w-full h-48 bg-gray-200 dark:bg-gray-700">
                                     {campaign.image ? (
                                         <Image
-                                            src={campaign.image}
+                                            src={`https://hpyytbglpqsaxlnxgijh.supabase.co/storage/v1/object/public/campaign-images/4ea27eae-961f-42a1-b799-3f269cb4f102/${campaign.image}`}
                                             alt="Campaign"
-                                            fill
                                             style={{ objectFit: 'cover' }}
+                                            fill
                                         />
                                     ) : (
                                         <div className="absolute inset-0 flex items-center justify-center">

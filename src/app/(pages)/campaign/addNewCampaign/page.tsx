@@ -19,11 +19,14 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
+import { v4 as uuidv4 } from "uuid";
+import { createClient } from "@/lib/supabase/client";
 
 export default function NewCampaignPage() {
     const router = useRouter();
     const [error, setError] = useState<string | null>(null);
     const createCampaign = trpc.campaigns.create.useMutation();
+    const supabase = createClient();
 
     const [campaign, setCampaign] = useState({
         campaign_title: "",
@@ -32,13 +35,37 @@ export default function NewCampaignPage() {
         campaign_description: "",
         start_date: undefined as Date | undefined,
         end_date: undefined as Date | undefined,
-        image: null as string | null,
+        image: null as File | null,
+        image_id: null as string | null,
     });
     const handleCreateCampaign = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        console.log("Form submitted with data:", campaign);
-
         try {
+            let imageId = campaign.image_id;
+            if (campaign.image && !campaign.image_id) {
+                const fileName = `${uuidv4()}.jpg`;
+
+                // Upload the image to Supabase
+                const { data, error } = await supabase.storage.from("campaign-images")
+                    .upload(
+                        "4ea27eae-961f-42a1-b799-3f269cb4f102" //userId test (it going to be changed to the user id)
+                        +
+                        "/"
+                        +
+                        uuidv4(),
+                        campaign.image,
+                        {
+                            contentType: "image/jpeg",
+                            upsert: true,
+                        }
+                    );
+
+                if (error) {
+                    throw new Error(`Upload failed: ${error.message}`);
+                }
+
+                imageId = data.id;
+            }
             await createCampaign.mutateAsync({
                 campaign_title: campaign.campaign_title,
                 brand_name: campaign.brand_name,
@@ -46,11 +73,13 @@ export default function NewCampaignPage() {
                 campaign_description: campaign.campaign_description,
                 start_date: campaign.start_date?.toISOString() || "",
                 end_date: campaign.end_date?.toISOString() || "",
+                image_id: imageId,
             });
             router.push('/campaign');
         } catch (error) {
             setError("Failed to create campaign. Please try again.");
             console.error("Error creating campaign:", error);
+        } finally {
         }
     };
 
@@ -63,16 +92,11 @@ export default function NewCampaignPage() {
 
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                if (e.target?.result) {
-                    setCampaign({
-                        ...campaign,
-                        image: e.target.result as string,
-                    });
-                }
-            };
-            reader.readAsDataURL(e.target.files[0]);
+            const file = e.target.files[0];
+            setCampaign({
+                ...campaign,
+                image: file,
+            });
         }
     };
 
@@ -119,7 +143,7 @@ export default function NewCampaignPage() {
                                             {campaign.image ? (
                                                 <div className="relative w-full h-full overflow-hidden rounded-lg">
                                                     <Image
-                                                        src={campaign.image}
+                                                        src={URL.createObjectURL(campaign.image)}
                                                         alt="Campaign preview"
                                                         fill
                                                         style={{ objectFit: 'cover' }}
@@ -277,7 +301,7 @@ export default function NewCampaignPage() {
                                 <div className="relative w-full h-48 bg-gray-200 dark:bg-gray-700">
                                     {campaign.image ? (
                                         <Image
-                                            src={campaign.image}
+                                            src={URL.createObjectURL(campaign.image)}
                                             alt="Campaign"
                                             fill
                                             style={{ objectFit: 'cover' }}

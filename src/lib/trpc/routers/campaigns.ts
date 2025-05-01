@@ -11,6 +11,7 @@ const campaignSchema = z.object({
   end_date: z.string().min(1, { message: "End date is required" }),
   budget: z.number().positive({ message: "Budget must be a positive number" }),
   campaign_description: z.string().nullable().optional(),
+  image_id: z.string().nullable().optional(),
 });
 
 const formatDate = (date: Date): string => {
